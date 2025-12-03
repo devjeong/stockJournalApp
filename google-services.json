@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "389740171792",
+    "project_id": "stockjournalapp-71e0d",
+    "storage_bucket": "stockjournalapp-71e0d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:389740171792:android:55807c65db8a0619eeb095",
+        "android_client_info": {
+          "package_name": "com.devjeong.stockJournalApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoIQXLIqOTx_OFMxMl02WjWvxdHBu4mrs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
