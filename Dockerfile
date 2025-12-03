@@ -1,31 +1,27 @@
-# Use Node.js base image
-FROM node:18-alpine
+# Stage 1: Build the React application
+FROM node:18-alpine as build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm install
-
-# Copy source code
+# Copy source code and build
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Install serve package globally to serve static files
-RUN npm install -g serve
+# Stage 2: Serve with Nginx
+FROM nginx:alpine
 
-# Cloud Run sets the PORT environment variable (default 8080)
-ENV PORT=8080
+# Copy built assets from builder stage
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose the port
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Cloud Run defaults to port 8080
 EXPOSE 8080
 
-# Start the application using serve
-# -s: Single page application (rewrites 404s to index.html)
-# -l: Listen on specified port
-CMD ["sh", "-c", "serve -s dist -l $PORT"]
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
