@@ -1,62 +1,40 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-    onAuthStateChanged,
-    signInAnonymously,
-    signOut as firebaseSignOut,
-    GoogleAuthProvider,
-    signInWithPopup
-} from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { auth, googleProvider } from '../firebase';
+import { signInWithPopup, signOut, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+    return useContext(AuthContext);
+}
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [currency, setCurrency] = useState('KRW'); // 'KRW' or 'USD'
+
+    function loginWithGoogle() {
+        return signInWithPopup(auth, googleProvider);
+    }
+
+    function loginAnonymously() {
+        return signInAnonymously(auth);
+    }
+
+    function logout() {
+        return signOut(auth);
+    }
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
             setLoading(false);
         });
+
         return unsubscribe;
     }, []);
 
-    const toggleCurrency = () => {
-        setCurrency(prev => prev === 'KRW' ? 'USD' : 'KRW');
-    };
-
-    const loginWithGoogle = async () => {
-        try {
-            const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
-        } catch (error) {
-            console.error("Google Login Error:", error);
-            // Fallback to anonymous for demo if config is missing
-            if (error.code === 'auth/configuration-not-found' || error.code === 'auth/api-key-not-valid') {
-                alert("Firebase Config missing. Logging in anonymously for demo.");
-                await signInAnonymously(auth);
-            } else {
-                throw error;
-            }
-        }
-    };
-
-    const loginAnonymously = async () => {
-        return signInAnonymously(auth);
-    };
-
-    const logout = async () => {
-        return firebaseSignOut(auth);
-    };
-
     const value = {
         user,
-        currency,
-        toggleCurrency,
         loginWithGoogle,
         loginAnonymously,
         logout
@@ -67,4 +45,4 @@ export const AuthProvider = ({ children }) => {
             {!loading && children}
         </AuthContext.Provider>
     );
-};
+}
