@@ -11,6 +11,7 @@ export function useAuth() {
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'KRW');
 
     function loginWithGoogle() {
         return signInWithPopup(auth, googleProvider);
@@ -24,6 +25,14 @@ export function AuthProvider({ children }) {
         return signOut(auth);
     }
 
+    function toggleCurrency() {
+        setCurrency(prev => {
+            const newCurrency = prev === 'KRW' ? 'USD' : 'KRW';
+            localStorage.setItem('currency', newCurrency);
+            return newCurrency;
+        });
+    }
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
@@ -35,9 +44,11 @@ export function AuthProvider({ children }) {
 
     const value = {
         user,
+        currency,
         loginWithGoogle,
         loginAnonymously,
-        logout
+        logout,
+        toggleCurrency
     };
 
     return (

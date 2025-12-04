@@ -6,6 +6,9 @@ import Input from '../components/Input';
 import { useAuth } from '../contexts/AuthContext';
 import { addTradeLog, updateTradeLog } from '../services/firestore';
 
+import StockSearch from '../components/StockSearch';
+import { getStockPrice } from '../services/stockPrice';
+
 const AddEntryScreen = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -19,7 +22,8 @@ const AddEntryScreen = () => {
 
     const [formData, setFormData] = useState({
         date: editData?.date || new Date().toISOString().split('T')[0],
-        ticker: editData?.ticker || '',
+        symbol: editData?.symbol || editData?.ticker || '', // Support legacy 'ticker' field
+        name: editData?.name || '',
         type: editData?.type || 'buy',
         price: editData?.price || '',
         quantity: editData?.quantity || '',
@@ -28,6 +32,27 @@ const AddEntryScreen = () => {
     });
 
     const fileInputRef = React.useRef(null);
+
+    const handleStockSelect = async (stock) => {
+        setFormData(prev => ({
+            ...prev,
+            symbol: stock.symbol,
+            name: stock.description
+        }));
+
+        // Fetch current price to auto-fill
+        try {
+            const priceData = await getStockPrice(stock.symbol);
+            if (priceData && priceData.price) {
+                setFormData(prev => ({
+                    ...prev,
+                    price: priceData.price
+                }));
+            }
+        } catch (error) {
+            console.error("Failed to auto-fill price:", error);
+        }
+    };
 
     const handleFileSelect = async (e) => {
         const file = e.target.files[0];
@@ -43,7 +68,8 @@ const AddEntryScreen = () => {
             setMode('manual');
             setFormData(prev => ({
                 ...prev,
-                ticker: 'LG에너지솔루션',
+                symbol: '373220',
+                name: 'LG에너지솔루션',
                 price: '385000',
                 quantity: '5',
                 type: 'buy',
@@ -59,19 +85,30 @@ const AddEntryScreen = () => {
     };
 
     const handleSubmit = async () => {
-        if (!formData.ticker || !formData.price) return;
+        // Validation Check
+        if (!formData.symbol || !formData.price || !formData.quantity) {
+            alert("종목, 가격, 수량은 필수 입력 항목입니다.");
+            return;
+        }
+
         try {
+            if (!user) {
+                alert("로그인이 필요합니다.");
+                return;
+            }
+
             const dataToSave = {
                 ...formData,
+                ticker: formData.symbol, // Keep 'ticker' for backward compatibility if needed, or just use symbol
                 profit: formData.type === 'sell' ? (formData.profit || 0) : 0
             };
 
             if (isEdit) {
                 await updateTradeLog(user.uid, editData.id, dataToSave);
-                alert("성공적으로 수정되었습니다.");
+                alert("성공적으로 수정되었습니다!");
             } else {
                 await addTradeLog(user.uid, dataToSave);
-                alert("성공적으로 저장되었습니다.");
+                alert("성공적으로 저장되었습니다!");
             }
             navigate('/journal');
         } catch (error) {
@@ -165,12 +202,12 @@ const AddEntryScreen = () => {
                         value={formData.date}
                         onChange={e => setFormData({ ...formData, date: e.target.value })}
                     />
-                    <Input
-                        label="종목명"
-                        placeholder="예: 삼성전자, Tesla"
-                        value={formData.ticker}
-                        onChange={e => setFormData({ ...formData, ticker: e.target.value })}
+
+                    <StockSearch
+                        onSelect={handleStockSelect}
+                        initialValue={formData.name || formData.symbol}
                     />
+
                     <div className="flex gap-4">
                         <div className="flex-1">
                             <Input

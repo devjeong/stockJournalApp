@@ -38,8 +38,8 @@ const JournalScreen = () => {
     };
 
     const filteredLogs = logs.filter(log => {
-        const matchesSearch = log.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            log.notes.toLowerCase().includes(searchTerm.toLowerCase());
+        const searchTarget = `${log.name || ''} ${log.ticker || ''} ${log.symbol || ''} ${log.notes || ''}`.toLowerCase();
+        const matchesSearch = searchTarget.includes(searchTerm.toLowerCase());
         const matchesFilter = filterType === 'all' || log.type === filterType;
         return matchesSearch && matchesFilter;
     });
@@ -55,7 +55,7 @@ const JournalScreen = () => {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="종목명, 메모 검색"
+                            placeholder="종목명, 티커, 메모 검색"
                             className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -102,8 +102,11 @@ const JournalScreen = () => {
 
                         <div className="flex justify-between items-end mb-3">
                             <div>
-                                <h3 className="font-bold text-lg text-gray-900">{log.ticker}</h3>
-                                <p className="text-sm text-gray-500">{log.quantity}주 @ {parseInt(log.price).toLocaleString()}원</p>
+                                <h3 className="font-bold text-lg text-gray-900">{log.name || log.ticker}</h3>
+                                {(log.symbol || (log.name && log.ticker !== log.name)) && (
+                                    <p className="text-xs text-gray-400">{log.symbol || log.ticker}</p>
+                                )}
+                                <p className="text-sm text-gray-500 mt-1">{log.quantity}주 @ {parseInt(log.price).toLocaleString()}원</p>
                             </div>
                             <div className="text-right">
                                 <p className="font-bold text-gray-900">

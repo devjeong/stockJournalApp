@@ -5,12 +5,20 @@ export const calculateHoldings = (entries) => {
     const holdingsMap = {};
 
     sortedEntries.forEach(entry => {
-        const ticker = entry.ticker;
-        if (!holdingsMap[ticker]) {
-            holdingsMap[ticker] = { quantity: 0, totalCost: 0, avgPrice: 0 };
+        // Use symbol if available, otherwise fallback to ticker (for old data)
+        const key = entry.symbol || entry.ticker;
+
+        if (!holdingsMap[key]) {
+            holdingsMap[key] = {
+                quantity: 0,
+                totalCost: 0,
+                avgPrice: 0,
+                name: entry.name || entry.ticker, // Store name
+                symbol: entry.symbol || entry.ticker // Store symbol
+            };
         }
 
-        const current = holdingsMap[ticker];
+        const current = holdingsMap[key];
         const price = parseInt(entry.price);
         const quantity = parseInt(entry.quantity);
 
@@ -27,12 +35,12 @@ export const calculateHoldings = (entries) => {
 
         // Clean up if quantity is 0 or less
         if (current.quantity <= 0) {
-            delete holdingsMap[ticker];
+            delete holdingsMap[key];
         }
     });
 
-    return Object.entries(holdingsMap).map(([ticker, data]) => ({
-        ticker,
+    return Object.entries(holdingsMap).map(([key, data]) => ({
+        ticker: key, // Keep ticker for backward compatibility
         ...data
     }));
 };

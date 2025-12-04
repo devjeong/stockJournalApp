@@ -7,7 +7,7 @@ import { calculateHoldings } from '../utils/portfolio';
 import { getStockPrice } from '../services/stockPrice';
 
 const HomeScreen = () => {
-    const { user, currency } = useAuth();
+    const { user, currency, toggleCurrency } = useAuth();
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [exchangeRate, setExchangeRate] = useState(1400); // Default fallback
@@ -56,9 +56,10 @@ const HomeScreen = () => {
         setPriceLoading(true);
         const prices = {};
         await Promise.all(holdings.map(async (h) => {
-            const data = await getStockPrice(h.ticker);
+            // Use symbol for fetching price
+            const data = await getStockPrice(h.symbol);
             if (data) {
-                prices[h.ticker] = data;
+                prices[h.symbol] = data;
             }
         }));
         setCurrentPrices(prev => ({ ...prev, ...prices }));
@@ -74,7 +75,7 @@ const HomeScreen = () => {
     // Calculate Total Holdings Value (Current Market Value)
     // Normalize everything to KRW first for calculation
     const totalHoldingsValueKRW = holdings.reduce((acc, cur) => {
-        const priceData = currentPrices[cur.ticker];
+        const priceData = currentPrices[cur.symbol];
         let currentPriceKRW = cur.avgPrice; // Fallback to avgPrice (which is assumed to be in KRW for simplicity or needs normalization)
 
         // Note: In a real app, we should store the currency of the trade log. 
@@ -168,13 +169,21 @@ const HomeScreen = () => {
                                 {totalUnrealizedProfitKRW >= 0 ? '+' : ''}{formatMoney(displayUnrealized)} ({totalUnrealizedProfitRate.toFixed(1)}%)
                             </div>
                         </div>
-                        <button
-                            onClick={fetchPrices}
-                            disabled={priceLoading}
-                            className={`p-2 rounded-full bg-gray-100 text-gray-600 ${priceLoading ? 'animate-spin' : ''}`}
-                        >
-                            <RefreshCw size={18} />
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={toggleCurrency}
+                                className="px-3 py-2 rounded-full bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 transition-colors"
+                            >
+                                {currency}
+                            </button>
+                            <button
+                                onClick={fetchPrices}
+                                disabled={priceLoading}
+                                className={`p-2 rounded-full bg-gray-100 text-gray-600 ${priceLoading ? 'animate-spin' : ''}`}
+                            >
+                                <RefreshCw size={18} />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -229,7 +238,7 @@ const HomeScreen = () => {
                     ) : (
                         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                             {holdings.map(holding => {
-                                const priceData = currentPrices[holding.ticker];
+                                const priceData = currentPrices[holding.symbol];
                                 let currentPrice = null;
                                 let profitRate = 0;
 
@@ -245,9 +254,12 @@ const HomeScreen = () => {
                                 }
 
                                 return (
-                                    <div key={holding.ticker} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 min-w-[160px] flex-shrink-0">
+                                    <div key={holding.symbol} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 min-w-[160px] flex-shrink-0">
                                         <div className="flex justify-between items-start mb-1">
-                                            <p className="font-bold text-gray-900">{holding.ticker}</p>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{holding.name}</p>
+                                                <p className="text-xs text-gray-400">{holding.symbol}</p>
+                                            </div>
                                             {priceData && (
                                                 <span className={`text-xs font-bold ${profitRate >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
                                                     {profitRate >= 0 ? '+' : ''}{profitRate.toFixed(1)}%
