@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBVYYR82Q0df66Sr2PYc6kD7_TooeVCXK8",
-    authDomain: "stockjournalapp-prod.web.app",
+    authDomain: "stockjournalapp-prod.firebaseapp.com",
     projectId: "stockjournalapp-prod",
     storageBucket: "stockjournalapp-prod.firebasestorage.app",
     messagingSenderId: "32734941456",
